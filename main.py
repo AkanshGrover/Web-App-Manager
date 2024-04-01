@@ -22,28 +22,41 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             firefoxpath = r'C:\Program Files\Mozilla Firefox\firefox.exe'
             edgepath = r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
             self.ffprofile = f"{winshell.application_data()}\\Mozilla\\Firefox\\Profiles\\webapp-profile"
-            
-            if os.path.exists(chromepath):
-                self.browsersavail["Chrome"] = chromepath
-            if os.path.exists(bravepath):
-                self.browsersavail["Brave"] = bravepath
-            if os.path.exists(firefoxpath):
-                self.browsersavail["Firefox"] = firefoxpath
-                if not os.path.exists(self.ffprofile):
-                    os.mkdir(self.ffprofile)
+        elif sys.platform == "linux":
+            chromepath = r'/usr/bin/google-chrome-stable'
+            bravepath = r'/usr/bin/brave'
+            firefoxpath = r'/usr/bin/firefox'
+            edgepath = r'/usr/bin/microsoft-edge-stable'
+            self.ffprofile = f"{os.environ['HOME']}/.mozilla/firefox/webapp-profile"
+
+        if os.path.exists(chromepath):
+            self.browsersavail["Chrome"] = chromepath
+        if os.path.exists(bravepath):
+            self.browsersavail["Brave"] = bravepath
+        if os.path.exists(firefoxpath):
+            self.browsersavail["Firefox"] = firefoxpath
+            if not os.path.exists(self.ffprofile):
+                os.mkdir(self.ffprofile)
+                if sys.platform == "win32":
                     os.mkdir(f"{self.ffprofile}\\chrome")
                     with open(f"{self.ffprofile}\\user.js", "w") as file:
                         file.write(r'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);')
                     with open(f"{self.ffprofile}\\chrome\\userChrome.css", "w") as file:
                         file.write(r'#nav-bar, #tabbrowser-tabs {visibility: collapse !important;}')
-            if os.path.exists(edgepath):
-                self.browsersavail["Edge"] = edgepath
-            if len(self.browsersavail) == 0:
-                self.displaydialog("Error", "No supported browsers available")
-
-            self.browsernameip.addItems(self.browsersavail.keys())
-            self.browsermodeip.addItems(["Normal", "Incognito"])
-
+                elif sys.platform == "linux":
+                    os.mkdir(f"{self.ffprofile}/chrome")
+                    with open(f"{self.ffprofile}/user.js", "w") as file:
+                        file.write(r'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);')
+                    with open(f"{self.ffprofile}/chrome/userChrome.css", "w") as file:
+                        file.write(r'#nav-bar, #tabbrowser-tabs {visibility: collapse !important;}')
+        if os.path.exists(edgepath):
+            self.browsersavail["Edge"] = edgepath
+        if len(self.browsersavail) == 0:
+            self.displaydialog("Error", "No supported browsers available")
+        
+        self.browsernameip.addItems(self.browsersavail.keys())
+        self.browsermodeip.addItems(["Normal", "Incognito"])
+            
         self.chooseiconbtn.clicked.connect(self.geticon)
         self.createwa.clicked.connect(self.createwafunc)
 
@@ -88,6 +101,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 shortcut.Arguments = cmd
                 shortcut.IconLocation = icon
                 shortcut.save()
+            elif sys.platform == "linux":
+                path = os.path.join(os.environ['HOME'], f".local/share/applications/{name}.desktop")
+                execline = f"{self.browsersavail[browser]} {cmd}"
+                with open(path, "w") as file:
+                    file.write("[Desktop Entry]\n")
+                    file.write("Type=Application\n")
+                    file.write("Encoding=UTF-8\n")
+                    file.write("Name=")
+                    file.write(name + '\n')
+                    file.write("Comment=A Web App\n")
+                    file.write("Exec=")
+                    file.write(execline + '\n')
+                    file.write("Icon=")
+                    file.write(icon + '\n')
 
     def geticon(self):
         dialog = QtWidgets.QFileDialog(self)
@@ -95,7 +122,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if sys.platform == "win32":
             dialog.setNameFilter("Files (*.ico)")
         else:
-            dialog.setNameFilter("Files (*.png; *.ico; *.jpeg; *.jpg)")
+            dialog.setNameFilter("Files (*.png *.ico *.jpeg *.jpg)")
         dialog.setViewMode(QtWidgets.QFileDialog.List)
         icon = ""
         if dialog.exec():

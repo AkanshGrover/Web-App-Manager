@@ -76,7 +76,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if (name == "" or url == "" or icon == ""):
             self.displaydialog("Error", "Some or all entries are empty")
         else:
-            if url.find("https") == -1:
+            if url.find("https") == -1 and url.find("http") == -1:
                 url = f"https://{url}"
             if browser == "Chrome" or browser == "Brave" or browser == "Edge":
                 if app:
@@ -101,6 +101,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 shortcut.Arguments = cmd
                 shortcut.IconLocation = icon
                 shortcut.save()
+                self.clearinput()
             elif sys.platform == "linux":
                 path = os.path.join(os.environ['HOME'], f".local/share/applications/{name}.desktop")
                 execline = f"{self.browsersavail[browser]} {cmd}"
@@ -115,6 +116,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     file.write(execline + '\n')
                     file.write("Icon=")
                     file.write(icon + '\n')
+                self.clearinput()
 
     def geticon(self):
         dialog = QtWidgets.QFileDialog(self)
@@ -132,6 +134,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.chooseiconbtn.setIcon(QIcon(icon))
             self.chooseiconbtn.setIconSize(QSize(65,65))
             self.chooseiconbtn.setText("")
+
+    def clearinput(self):
+        self.nameip.clear()
+        self.urlip.clear()
+        self.iconpathip.clear()
+        self.browsernameip.setCurrentIndex(0)
+        self.browsermodeip.setCurrentIndex(0)
+        self.chooseiconbtn.setIcon(QIcon())
+        self.chooseiconbtn.setText("Select an icon")
+        self.appmode.setChecked(False)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
